@@ -35,20 +35,22 @@ Ort::Session CreateSession(const std::string& model_path, Ort::Env& env, OrtCUDA
 }
 
 // Function to get input and output information from the session
-void GetSessionInfo(const Ort::Session& session, 
-					std::vector<const char*>& input_names, std::vector<const char*>& output_names) 
+void GetSessionInfo(const Ort::Session& session,
+	std::vector<std::string>& input_nodename,
+	std::vector<std::string>& output_nodename) //string
 {
 	Ort::AllocatorWithDefaultOptions allocator;
 
 	// Names and numbers of input nodes and output nodes in encoder
 	size_t input_count = session.GetInputCount();
 	size_t output_count = session.GetOutputCount();
-	std::vector<std::string> input_nodename;
-	std::vector<std::string> output_nodename;
+
+	//std::vector<std::string> input_nodename;
+	//std::vector<std::string> output_nodename;
 
 	std::cout << "[Encoder] input node count: " << input_count << std::endl;
 	std::cout << "          input node name: ";
-	for (auto i = 0; i < input_count; ++i) 
+	for (size_t i = 0; i < input_count; ++i)
 	{
 		auto nodename = session.GetInputNameAllocated(i, allocator);
 		std::cout << nodename << " ";
@@ -57,9 +59,9 @@ void GetSessionInfo(const Ort::Session& session,
 	}
 	std::cout << std::endl;
 
-	std::cout << "[Encoder] output node count: " << input_count << std::endl;
+	std::cout << "[Encoder] output node count: " << output_count << std::endl;
 	std::cout << "          output node name: ";
-	for (auto i = 0; i < output_count; ++i) 
+	for (size_t i = 0; i < output_count; ++i)
 	{
 		auto nodename = session.GetOutputNameAllocated(i, allocator);
 		std::cout << nodename << " ";
@@ -67,9 +69,6 @@ void GetSessionInfo(const Ort::Session& session,
 		output_nodename[i].append(nodename.get());
 	}
 	std::cout << std::endl;
-
-	input_names = VecStr2Vecchar(input_nodename);
-	output_names = VecStr2Vecchar(output_nodename);
 }
 
 
@@ -78,22 +77,17 @@ int main()
 	//------------------------------------------------Customized parameters--------------------------------------------------------
 	
 	// path to image
-	std::string img_path = "wanderer1.jpg";
+	std::string img_path = "D:\\Project\\SAMDeployment\\InputData\\testdata\\wanderer2.jpg";
 
 	// input mode
 	// (please input "point" or "box")
 	std::string mode = "box";
 
 	// input coordinate
-	std::vector<float> box_point(4);
-	box_point = { 478, 930, 521, 1014 };
-	//float x, y;    // test point
-	//x = 323; y = 541;
-	//std::tuple<float, float> point{x, y};
 
 	// encoder model path & decoder model path
-	std::string encoder_model_path = "Model\\sam_vit_b_encoder.onnx";
-	std::string decoder_model_path = "Model\\sam_vit_b_pmdecoder.onnx";
+	std::string encoder_model_path = "D:\\Project\\WovenBagDetection\\GenerateMask\\SAM_ONNX\\sam_vit_b_VITencoder.onnx";
+	std::string decoder_model_path = "D:\\Project\\WovenBagDetection\\GenerateMask\\SAM_ONNX\\sam_vit_b_pmdecoder.onnx";
 
 	//-----------------------------------------------------Public Space------------------------------------------------------------
 #pragma region PublicSpace
@@ -118,56 +112,13 @@ int main()
 
 	// Create session for encoder
 	Ort::Session encoder_session = CreateSession(encoder_model_path, env, cuda_options);
-# if 0
-	// get dimensions of inputs and outputs
-	std::vector<int64_t> input_dim_en = encoder_session.GetInputTypeInfo(0).GetTensorTypeAndShapeInfo().GetShape();
-	std::vector<int64_t> output_dim_en = encoder_session.GetOutputTypeInfo(0).GetTensorTypeAndShapeInfo().GetShape();
 
-	// names and numbers of input nodes and output nodes in	encoder
-	size_t input_count_en = encoder_session.GetInputCount();
-	size_t output_count_en = encoder_session.GetOutputCount();
-	std::vector<std::string> input_nodename_en;
-	std::vector<std::string> output_nodename_en;
-
-	std::cout << "[Encoder] input node count: " << input_count_en << std::endl;
-	std::cout << "          input node name: ";
-	for (auto i = 0; i < input_count_en; ++i)
-	{
-		auto nodename = encoder_session.GetInputNameAllocated(i, allocator);
-		std::cout << nodename << " ";
-
-		input_nodename_en.push_back("");
-		input_nodename_en[i].append(nodename.get());
-	}
-	std::cout << std::endl;
-
-
-	std::cout << "[Encoder] output node count: " << input_count_en << std::endl;
-	std::cout << "          output node name: ";
-	for (auto i = 0; i < output_count_en; ++i)
-	{
-		auto nodename = encoder_session.GetOutputNameAllocated(i, allocator);
-		std::cout << nodename << " ";
-
-		output_nodename_en.push_back("");
-		output_nodename_en[i].append(nodename.get());
-	}
-	std::cout << std::endl;
-
-	std::vector<const char*> input_name_en;
-	input_name_en = VecStr2Vecchar(input_nodename_en);
-	std::vector<const char*> output_name_en;
-	output_name_en = VecStr2Vecchar(output_nodename_en);
-
-#endif
-
+	std::vector<std::string> input_name_en, output_name_en;
+	GetSessionInfo(encoder_session, input_name_en, output_name_en);
 	std::vector<const char*> input_names_en, output_names_en;
-	GetSessionInfo(encoder_session, input_names_en, output_names_en);
+	for (const auto& name : input_name_en) input_names_en.push_back(name.c_str());
+	for (const auto& name : output_name_en) output_names_en.push_back(name.c_str());
 
-	for (const char* input_name : input_names_en) 
-	{
-		std::cout << input_name << std::endl;
-	}
 #pragma endregion
 
 	//-------------------------------------------------data preprocessing-----------------------------------------------------------
@@ -195,11 +146,11 @@ int main()
 	std::cout << "[Encoder] Inference ON" << std::endl;
 	std::chrono::steady_clock::time_point start_time_en = std::chrono::steady_clock::now();
 	auto output_tensor_en = encoder_session.Run(Ort::RunOptions {nullptr},	  // run options
-										   input_names_en.data(),          // name of model input_en node
-										   input_tensor_en.data(),        // input_en tensors
-										   input_tensor_en.size(),        // number of input_en node
-										   output_names_en.data(),         // name of model output node
-										   output_names_en.size());        // number of output node
+												input_names_en.data(),          // name of model input_en node
+												input_tensor_en.data(),        // input_en tensors
+												input_tensor_en.size(),        // number of input_en node
+												output_names_en.data(),         // name of model output node
+												output_names_en.size());        // number of output node
 
 	std::chrono::steady_clock::time_point end_time_en = std::chrono::steady_clock::now();
 	std::chrono::duration<double> time_en = std::chrono::duration_cast<std::chrono::duration<double>>(end_time_en - start_time_en);
@@ -297,9 +248,9 @@ int main()
 
 	//MouseEvent action = CaptureMouseAction(image);
 	//std::tuple<float, float> point = { static_cast<float>(action.x), static_cast<float>(action.y) };
-	//float x, y;    // test point
-	//x = 323; y = 541;
-	//std::tuple<float, float> point{x, y};
+	float x, y;    // test point
+	x = 323; y = 541;
+	std::tuple<float, float> point{x, y};
 	std::vector<std::tuple<float, float>> inputpoints_list;
 	inputpoints_list.push_back(point);
 
@@ -344,7 +295,11 @@ int main()
 #endif
 	//- - - - - - - - - - - - - - - - - - - - - - - - - - - box input- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #if 1
+	// test box:[484, 940, 517, 1003]
+	std::vector<float> box_point(4);
 	std::vector<std::vector<float>> boxes;
+
+	box_point = { 478, 930, 521, 1014 };
 	boxes.push_back(box_point);
 
 	int target_length = std::max(input_dim_en[2], input_dim_en[3]);
@@ -372,6 +327,9 @@ int main()
 
 #if 1
 	// get labels of boxes
+	// label == 1 : foreground
+	// label == 0 : background
+	// assuming label = 1 as test
 	std::vector<float> boxes_points_label_value;
 	int boxes_label_num = boxes_num;
 	for (auto i = 0; i < boxes_label_num; ++i)
