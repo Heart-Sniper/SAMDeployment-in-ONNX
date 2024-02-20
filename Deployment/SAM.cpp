@@ -188,39 +188,11 @@ int main()
 
 	Ort::Session decoder_session = CreateSession(decoder_model_path, env, cuda_options);
 
-	// names and numbers of input nodes and output nodes
-	size_t input_count_de = decoder_session.GetInputCount();
-	size_t output_count_de = decoder_session.GetOutputCount();
-	std::vector<std::string> input_nodename_de;
-	std::vector<std::string> output_nodename_de;
-
-	std::cout << "[Decoder] input node count " << input_count_de << std::endl;
-	std::cout << "          input node name: ";
-	for (auto i = 0; i < input_count_de; ++i)
-	{
-		auto nodename = decoder_session.GetInputNameAllocated(i, allocator);
-		std::cout << nodename << " ";
-
-		input_nodename_de.push_back("");
-		input_nodename_de[i].append(nodename.get());
-	}
-
-	std::cout << std::endl << "[Decoder] output node count " << output_count_de << std::endl;
-	std::cout << "          output node name: ";
-	for (auto i = 0; i < output_count_de; ++i)
-	{
-		auto nodename = decoder_session.GetOutputNameAllocated(i, allocator);
-		std::cout << nodename << " ";
-
-		output_nodename_de.push_back("");
-		output_nodename_de[i].append(nodename.get());
-	}
-	std::cout << std::endl;
-
-	std::vector<const char*> input_name_de;
-	input_name_de = VecStr2Vecchar(input_nodename_de);
-	std::vector<const char*> output_name_de;
-	output_name_de = VecStr2Vecchar(output_nodename_de);
+	std::vector<std::string> input_name_de, output_name_de;
+	GetSessionInfo(decoder_session, input_name_de, output_name_de);
+	std::vector<const char*> input_names_de, output_names_de;
+	for (const auto& name : input_name_de) input_names_de.push_back(name.c_str());
+	for (const auto& name : output_name_de) output_names_de.push_back(name.c_str());
 
 #pragma endregion
 	//-----------------------------------------------------data preprocessing-------------------------------------------------------
@@ -393,11 +365,11 @@ int main()
 	std::cout << "[Decoder] Inference ON" << std::endl;
 	std::chrono::steady_clock::time_point start_time_de = std::chrono::steady_clock::now();
 	auto output_tensor_de = decoder_session.Run(Ort::RunOptions {nullptr},		// run options
-										   input_name_de.data(),            // name of model input node
+										   input_names_de.data(),            // name of model input node
 										   input_tensor_de.data(),          // input_en tensors
 										   input_tensor_de.size(),          // number of input node
-										   output_name_de.data(),           // name of model output node
-										   output_name_de.size());          // number of output node
+										   output_names_de.data(),           // name of model output node
+										   output_names_de.size());          // number of output node
 	std::chrono::steady_clock::time_point end_time_de = std::chrono::steady_clock::now();
 	std::chrono::duration<double> time_de = std::chrono::duration_cast<std::chrono::duration<double>>(end_time_de - start_time_de);
 	std::cout << "          Time Consumption: " << time_de.count() * 1000 / 100.0 << " ms" << std::endl;
