@@ -13,7 +13,6 @@
 #include "adjust_coords.h"
 
 static wchar_t* Char2Wchar(const char* ch);
-std::vector<const char*> VecStr2Vecchar(const std::vector<std::string>& vec_str);
 
 Ort::Session CreateSession(const std::string& model_path, Ort::Env& env, OrtCUDAProviderOptions cuda_options)
 {
@@ -48,8 +47,8 @@ void GetSessionInfo(const Ort::Session& session,
 	//std::vector<std::string> input_nodename;
 	//std::vector<std::string> output_nodename;
 
-	std::cout << "[Encoder] input node count: " << input_count << std::endl;
-	std::cout << "          input node name: ";
+	std::cout << "input node count: " << input_count << std::endl;
+	std::cout << "input node name: ";
 	for (size_t i = 0; i < input_count; ++i)
 	{
 		auto nodename = session.GetInputNameAllocated(i, allocator);
@@ -59,8 +58,8 @@ void GetSessionInfo(const Ort::Session& session,
 	}
 	std::cout << std::endl;
 
-	std::cout << "[Encoder] output node count: " << output_count << std::endl;
-	std::cout << "          output node name: ";
+	std::cout << "output node count: " << output_count << std::endl;
+	std::cout << "output node name: ";
 	for (size_t i = 0; i < output_count; ++i)
 	{
 		auto nodename = session.GetOutputNameAllocated(i, allocator);
@@ -113,6 +112,7 @@ int main()
 	// Create session for encoder
 	Ort::Session encoder_session = CreateSession(encoder_model_path, env, cuda_options);
 
+	std::cout << "---------Encoder---------" << std::endl;
 	std::vector<std::string> input_name_en, output_name_en;
 	GetSessionInfo(encoder_session, input_name_en, output_name_en);
 	std::vector<const char*> input_names_en, output_names_en;
@@ -143,7 +143,7 @@ int main()
 													   input_shape_en.data(), input_shape_en.size()));
 
 	// run session for encoder
-	std::cout << "[Encoder] Inference ON" << std::endl;
+	std::cout << "Inference ON" << std::endl;
 	std::chrono::steady_clock::time_point start_time_en = std::chrono::steady_clock::now();
 	auto output_tensor_en = encoder_session.Run(Ort::RunOptions {nullptr},	  // run options
 												input_names_en.data(),          // name of model input_en node
@@ -154,13 +154,13 @@ int main()
 
 	std::chrono::steady_clock::time_point end_time_en = std::chrono::steady_clock::now();
 	std::chrono::duration<double> time_en = std::chrono::duration_cast<std::chrono::duration<double>>(end_time_en - start_time_en);
-	std::cout << "          Inference Time Consumption: " << time_en.count() * 1000 / 100.0 << " ms" << std::endl;
-	std::cout << "[Encoder] Inference OFF" << std::endl;
+	std::cout << "Inference OFF          Inference Time Consumption: " << time_en.count() * 1000 / 100.0 << " ms" << std::endl;
+
 
 	// get output
-	std::cout << "[Encoder] output tensor dimension: " << output_tensor_en.size() << std::endl;
+	std::cout << "output tensor dimension: " << output_tensor_en.size() << std::endl;
 
-	std::cout << "          output value dimension: ";
+	std::cout << "output value dimension: ";
 	for (Ort::Value& ele : output_tensor_en)
 	{
 		auto num_ele = ele.GetTensorTypeAndShapeInfo().GetShape();
@@ -188,6 +188,7 @@ int main()
 
 	Ort::Session decoder_session = CreateSession(decoder_model_path, env, cuda_options);
 
+	std::cout << "---------Decoder---------" << std::endl;
 	std::vector<std::string> input_name_de, output_name_de;
 	GetSessionInfo(decoder_session, input_name_de, output_name_de);
 	std::vector<const char*> input_names_de, output_names_de;
@@ -362,7 +363,7 @@ int main()
 	input_tensor_de.push_back(std::move(orig_im_size));
 
 	// run session for decoder
-	std::cout << "[Decoder] Inference ON" << std::endl;
+	std::cout << "Inference ON" << std::endl;
 	std::chrono::steady_clock::time_point start_time_de = std::chrono::steady_clock::now();
 	auto output_tensor_de = decoder_session.Run(Ort::RunOptions {nullptr},		// run options
 										   input_names_de.data(),            // name of model input node
@@ -372,11 +373,10 @@ int main()
 										   output_names_de.size());          // number of output node
 	std::chrono::steady_clock::time_point end_time_de = std::chrono::steady_clock::now();
 	std::chrono::duration<double> time_de = std::chrono::duration_cast<std::chrono::duration<double>>(end_time_de - start_time_de);
-	std::cout << "          Time Consumption: " << time_de.count() * 1000 / 100.0 << " ms" << std::endl;
-	std::cout << "[Decoder] Inference OFF" << std::endl;
+	std::cout << "Inference OFF          Time Consumption: " << time_de.count() * 1000 / 100.0 << " ms" << std::endl;
 
 	// check out dimensions of outputs
-	std::cout << "[Decoder] output dimensions: " << std::endl;
+	std::cout << "output dimensions: " << std::endl;
 	int i = 0;
 	for (const Ort::Value& output_value : output_tensor_de)
 	{
@@ -460,24 +460,4 @@ static wchar_t* Char2Wchar(const char* ch)
 	mbstowcs_s(&convert, wch, len, ch, _TRUNCATE);
 
 	return wch;
-}
-
-/****
-* Function: VecStr2Vecchar
-* Description: Converts a vector of C++ strings to a vector of const char*.
-* 
-* @param vec_str (const std::vector<std::string>&): The input vector of strings.
-* 
-* @return (std::vector<const char*>): A vector of const char* containing the converted strings.
-****/
-std::vector<const char*> VecStr2Vecchar(const std::vector<std::string>& vec_str)
-{
-	std::vector<const char*> vec_char;
-	vec_char.reserve(vec_str.size());
-	for (const std::string& i : vec_str)
-	{
-		vec_char.push_back(i.c_str());
-	}
-
-	return vec_char;
 }
