@@ -241,7 +241,7 @@ int main()
 		points_coord_value.push_back(std::get<1>(p));
 	}
 	std::vector<int64_t> points_coord_shape;
-	points_coord_shape = session_de.GetInputTypeInfo(1).GetTensorTypeAndShapeInfo().GetShape();
+	points_coord_shape = decoder_session.GetInputTypeInfo(1).GetTensorTypeAndShapeInfo().GetShape();
 	points_coord_shape[1] = points_num;
 
 	Ort::Value points_coord = Ort::Value::CreateTensor(memory_info,
@@ -296,9 +296,7 @@ int main()
 	Ort::Value points_coord = Ort::Value::CreateTensor(memory_info,
 													   boxes_point_coords_value.data(), boxes_point_coords_value.size(),
 													   boxes_points_coord_shape.data(), boxes_points_coord_shape.size());
-#endif
 
-#if 1
 	// get labels of boxes
 	// label == 1 : foreground
 	// label == 0 : background
