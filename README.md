@@ -52,7 +52,7 @@ test point coordinates: [323, 541]</br>
 
 <center class="half">
 
-  <img src=README_img/point2.png width="300" /><img src=README_img/[323_541].png width="300">
+  <img src=README_img/point2.png /><img src=README_img/[323_541].png >
 </center>
 
 ### Bounding Box
@@ -61,12 +61,12 @@ test point coordinates: [323, 541]</br>
 
 <center class="half">
 
-  <img src=README_img/box1.png width="300" /><img src=README_img/[116_182_148_236].png width="300">
+  <img src=README_img/box1.png /><img src=README_img/[116_182_148_236].png>
 </center>
 
 + test box coordinates: [478, 930, 521, 1014]<br>
 
 <center class="half">
 
-  <img src=README_img/box2.png width="300" /><img src=README_img/[478_930_521_1014].png width="300">
+  <img src=README_img/box2.png width="400" /><img src=README_img/[478_930_521_1014].png width="400">
 </center>
