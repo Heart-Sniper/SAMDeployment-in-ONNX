@@ -52,7 +52,7 @@ test point coordinates: [323, 541]</br>
 
 <center class="half">
 
-  <img src=README_img/point2.png /><img src=README_img/[323_541].png >
+  <img src=README_img/point2.png width="400" /><img src=README_img/[323_541].png width="400" >
 </center>
 
 ### Bounding Box
